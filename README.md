@@ -46,14 +46,12 @@ mv sample.config.json config.json
 ```
 #### Config Parameters
 ```yml
-kollider:
-	api_ke: Your Kollider api key
-	ws_url: Websocket URL to the Kollider API
-lnd:
-	lnd_url: URL to your lightning node 
-	admin_macaroon_path: Path to your admin.macaroon file.
-	tls_path: Path to your tls cert.
 
+api_key: Your Kollider api key
+ws_url: Websocket URL to the Kollider API
+lnd_url: URL to your lightning node 
+admin_macaroon_path: Path to your admin.macaroon file.
+tls_path: Path to your tls cert.
 hedge_proportion: How much of your balance do you want to hedge, e.g. 0.01 = 1%
 hedge_side: The side you want to hedge. If your hedging your channel balance it should be `Bid`
 target_base_currency: Currency you want to hedge i.e. BTC
