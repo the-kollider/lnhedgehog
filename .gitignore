@@ -1,0 +1,7 @@
+admin.macaroon
+*.macaroon
+*.cert
+config.json
+googleapis/
+*.proto
+lightning_pb2*
