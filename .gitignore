@@ -5,3 +5,4 @@ config.json
 googleapis/
 *.proto
 lightning_pb2*
+__pycache__/*
