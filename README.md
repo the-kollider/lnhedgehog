@@ -1,6 +1,6 @@
 ## LN Hedgehog 🦔⚡
 
-Locking in a fiat price of your lightning wallet balance whilst earning interest using the Kollider api.
+Locking in a fiat price for your lightning wallet balance whilst earning interest using the Kollider api.
 
 #### Whats the point?
 
