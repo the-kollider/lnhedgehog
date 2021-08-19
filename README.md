@@ -32,6 +32,41 @@ cd kollider_api_client
 pip install -e .
 ```
 
+## Configuration
+
+In order to run Hedgehog you'll need:
+
+1. A Kollider API key
+2. The admin.macaroon of your node
+3. The tls.cert of your node
+
+There is a `sample.config.json` in this directory which you can use as a starting point. Change the name to make the scirpt use it.
+```
+mv sample.config.json config.json
+```
+#### Config Parameters
+```yml
+kollider:
+	api_ke: Your Kollider api key
+	ws_url: Websocket URL to the Kollider API
+lnd:
+	lnd_url: URL to your lightning node 
+	admin_macaroon_path: Path to your admin.macaroon file.
+	tls_path: Path to your tls cert.
+
+hedge_proportion: How much of your balance do you want to hedge, e.g. 0.01 = 1%
+hedge_side: The side you want to hedge. If your hedging your channel balance it should be `Bid`
+target_base_currency: Currency you want to hedge i.e. BTC
+target_fiat_currency: Currency youu want to hedge agains i.e. USD
+target_index_symbol: The kollider index price symbol for the pair in question.
+target_symbol: The Kollider symbol for the contract that is used to do the hedge.
+target_leverage: The leverage the hedge should be using.
+cycle_speed: How often should the program revaluate the position.
+order_type: What order type should the hedging programing use. Market | Limit
+
+
+```
+
 ## Run 
 
 ```shell
