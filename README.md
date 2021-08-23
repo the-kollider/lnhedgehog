@@ -13,7 +13,7 @@ This is what Hedgehog tying to achieve.
 
 #### How does it work?
 
-In a nutshell Hedgehog looks at your channel balances and automatically short sells Bitcoin against the fiat currency of your choice (currently only USD). This means that the value **in fiat terms** of your channel balances will always be the same no matter whether Bitcoin goes up or down. You might be thinking now that in order to do that you would need to lock up your entire channel balance on Kollider, which means you cannot spend your lightning Bitcoin. Fortunately this is not the case because Kollider allows you to borrow funds to limit your exposure on the plaform. For example, by default Hedgehog uses 10% of your balance to perform the hedging trade which leaves you with 90% of your lightning bitcoin free to spend.
+In a nutshell Ln Hedgehog looks at your channel balances and automatically short sells Bitcoin against the fiat currency of your choice (currently only USD). This means that the value **in fiat terms** of your channel balances will always be the same no matter whether Bitcoin goes up or down. You might be thinking now that in order to do that you would need to lock up your entire channel balance on Kollider, which means you cannot spend your lightning Bitcoin. Fortunately this is not the case because Kollider allows you to borrow funds to limit your exposure on the plaform. For example, by default Hedgehog uses 10% of your balance to perform the hedging trade which leaves you with 90% of your lightning bitcoin free to spend.
 
 Furthermore, since hedging is done through a perpetual swap contract where interest rates are exchange between buyers and sellers every 8h, Hedgehog can accumulate interest on your locked balance. However, in times where there is significant downwards pressure this hedging strategy will become more expensive.
 
@@ -75,6 +75,14 @@ order_type: What order type should the hedging programing use. Market | Limit
 ```shell
 python main.py
 ```
+
+## Potential Application
+
+- Reducing FX risk for merchants that accept Bitcoin Lightning payments. 
+- Wallets can offer this to their users as feature to decrease volatility. 
+	- [x] Peg Balance against USD
+- Wallets can offer this to their users to earn yield on their Bitcoin.
+- Others? 
 
 ## ⚠️ Warning
 
