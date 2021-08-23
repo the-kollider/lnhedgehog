@@ -1,5 +1,7 @@
 from os import get_inheritable
 from kollider_api_client.ws import KolliderWsClient
+from utils import *
+from console_logger import *
 from lnd_client import LndClient
 from msgs import OpenOrder, Position, TradableSymbol, Ticker
 from time import sleep
@@ -8,21 +10,23 @@ import json
 from math import floor
 import uuid
 from pprint import pprint
+import threading
+
+import zlib
+import pickle
+
+import zmq
 
 SATOSHI_MULTIPLIER = 100000000
 
-def opposite_side(side):
-	if side == "Bid":
-		return "Ask"
-	else:
-		return "Bid"
-
+SOCKET_ADDRESS = "tcp://*:5556"
 
 class HedgerState(object):
 	position_quantity = 0
 	ask_open_order_quantity = 0
 	bid_open_order_quantity = 0
 	target_quantity = 0
+	target_value = 0
 	is_locking = False
 	lock_price = None
 	side = None
@@ -33,15 +37,18 @@ class HedgerState(object):
 			"bid_open_order_quantity": self.bid_open_order_quantity,
 			"ask_open_order_quantity": self.ask_open_order_quantity,
 			"target_quantity": self.target_quantity,
+			"target_value": self.target_value,
 			"is_locking": self.is_locking,
 			"lock_price": self.lock_price,
 			"side": self.side
 		}
 
 class Wallet(object):
-	channel_balance = 0
-	onchain_balance = 0
-	kollider_balance = 0
+
+	def __init__(self):
+		self.channel_balance = 0
+		self.nchain_balance = 0
+		self.kollider_balance = 0
 
 	def update_channel_balance(self, balance):
 		self.channel_balance = balance
@@ -75,6 +82,10 @@ class HedgerEngine(KolliderWsClient):
 		self.ws_is_open = False
 		self.contracts = {}
 
+		self.last_state = None
+
+		self.node_info = None
+
 		self.order_type = "Market"
 
 		self.ln_channel_balance = 0
@@ -94,6 +105,20 @@ class HedgerEngine(KolliderWsClient):
 		self.target_leverage = 100
 
 		self.is_locked = True
+
+	def to_dict(self):
+		return {
+			"node_info": self.node_info,
+			"wallet": self.wallet.to_dict(),
+			"current_index_price": self.current_index_price,
+			"current_mark_price": self.current_mark_price,
+			"last_state": self.last_state.to_dict(),
+			"target_fiat_currency": self.target_fiat_currency,
+			"target_symbol": self.target_index_symbol,
+			"target_index_symbol": self.target_index_symbol,
+			"hedge_value": self.hedge_value,
+			"hedge_proportion": self.hedge_proportion,
+		}
 
 	def set_params(self, **args):
 		self.hedge_proportion = args.get("hedge_proportion") if args.get("hedge_proportion") else 0
@@ -303,9 +328,12 @@ class HedgerEngine(KolliderWsClient):
 				state.lock_price = open_position.entry_price
 
 		state.target_quantity = target_number_of_contracts
+		state.target_value = hedge_value
 		state.bid_open_order_quantity = open_bid_order_quantity
 		state.ask_open_order_quantity = open_ask_order_quantity
 		state.position_quantity = current_position_quantity
+
+		self.last_state = state
 
 		return state
 
@@ -386,11 +414,38 @@ class HedgerEngine(KolliderWsClient):
 		pprint(state.to_dict())
 		pprint(self.wallet.to_dict())
 
+	def update_node_info(self):
+		node_info = self.lnd_client.get_info()
+		self.node_info = {
+			"alias": node_info.alias,
+			"identity_pubkey": node_info.identity_pubkey,
+			"num_active_channels": node_info.num_active_channels,
+		}
+
 	def update_wallet_data(self):
 		channel_balances = self.lnd_client.get_channel_balances()
 		onchain_balances = self.lnd_client.get_onchain_balance()
 		self.wallet.update_channel_balance(channel_balances.balance)
 		self.wallet.update_onchain_balance(onchain_balances.total_balance)
+
+
+	def cli_listener(self):
+		context = zmq.Context()
+		socket = context.socket(zmq.REP)
+		socket.bind(SOCKET_ADDRESS)
+		while True:
+			message = socket.recv_json()
+			if message.get("action") is not None:
+				action = message.get("action")
+				value = message.get("value")
+				if action == "set_hedge_proportion":
+					print("here")
+					self.hedge_proportion = value
+			sleep(0.5)
+			msg = self.to_dict()
+			print(msg)
+			socket.send_json(msg)
+			sleep(0.5)
 
 	def start(self, settings):
 		pprint(settings)
@@ -403,6 +458,11 @@ class HedgerEngine(KolliderWsClient):
 		cycle_speed = settings["cycle_speed"]
 
 		self.set_params(**settings)
+
+		self.update_node_info()
+		
+		cli_listener = threading.Thread(target=self.cli_listener, daemon=False)
+		cli_listener.start()
 
 		while True:
 			# Don't do anything if we haven't received the contracts.
@@ -417,13 +477,13 @@ class HedgerEngine(KolliderWsClient):
 			if self.last_ticker.last_side is None:
 				continue
 
+
 			self.update_wallet_data()
 
 			# Getting current state.
 			state = self.build_target_state()
 			self.check_state(state)
 			# Printing the state.
-			self.print_state(state)
 			# Converging to that state.
 			self.converge_state(state)
 
