@@ -18,6 +18,8 @@ In a nutshell Hedgehog looks at your channel balances and automatically short se
 Furthermore, since hedging is done through a perpetual swap contract where interest rates are exchange between buyers and sellers every 8h, Hedgehog can accumulate interest on your locked balance. However, in times where there is significant downwards pressure this hedging strategy will become more expensive.
 
 ## Demo
+This demo shows how one can lock in a USD price for 0.5% of their lightning channel balance in seconds.
+
 ![Alt Text](demo.gif)
 
 ## Installation
