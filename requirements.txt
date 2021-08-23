@@ -1,9 +1,22 @@
+asciinema==2.0.2
 certifi==2021.5.30
 charset-normalizer==2.0.4
+colorama==0.4.4
+commonmark==0.9.1
 future==0.18.2
+googleapis-common-protos==1.53.0
 greenlet==1.1.1
+grpcio==1.39.0
+grpcio-tools==1.39.0
 idna==3.2
+-e git+git@github.com:kolliderhq/kollider-api-client.git@c8ff7b18a98afa1c142a41d6f1483497eddcb66a#egg=kollider_api_client
+protobuf==3.17.3
+Pygments==2.10.0
+pyzmq==22.2.1
 requests==2.26.0
+rich==10.7.0
+six==1.16.0
+typing-extensions==3.10.0.0
 urllib3==1.26.6
 websocket-client==1.2.1
 zope.event==4.5.0

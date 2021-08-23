@@ -3,7 +3,7 @@ from kollider_api_client.ws import KolliderWsClient
 from utils import *
 from console_logger import *
 from lnd_client import LndClient
-from msgs import OpenOrder, Position, TradableSymbol, Ticker
+from kollider_msgs import OpenOrder, Position, TradableSymbol, Ticker
 from time import sleep
 from threading import Lock
 import json
@@ -249,6 +249,9 @@ class HedgerEngine(KolliderWsClient):
 				total_balance += float(order_margin)
 			
 			self.wallet.update_kollider_balance(total_balance)
+		elif t == 'error':
+			print("ERROR")
+			print(data)
 
 	def cancel_all_orders_on_side(self, side):
 		orders = self.open_orders.get(self.target_symbol)
@@ -466,7 +469,7 @@ class HedgerEngine(KolliderWsClient):
 
 		while True:
 			# Don't do anything if we haven't received the contracts.
-			if not self.received_tradable_symbols:
+			if not self.received_tradable_symbols and not self.is_authenticated:
 				continue
 
 			# Don't do anything if we haven't received mark or index price.
