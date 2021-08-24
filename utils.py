@@ -1,11 +1,9 @@
-import pickle
-import zlib
+SATOSHI_MULTIPLIER = 100000000
 
 def opposite_side(side):
 	if side == "Bid":
 		return "Ask"
-	else:
-		return "Bid"
+	return "Bid"
 
 def sats_to_dollars(sats_amount, price):
-	return int((sats_amount / 100000000 * price) * 1000) / 1000
+	return int((sats_amount / SATOSHI_MULTIPLIER * price) * 1000) / 1000
