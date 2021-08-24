@@ -13,13 +13,13 @@ This is what Hedgehog tying to achieve.
 
 #### How does it work?
 
-In a nutshell Ln Hedgehog looks at your channel balances and automatically short sells Bitcoin against the fiat currency of your choice (currently only USD). This means that the value **in fiat terms** of your channel balances will always be the same no matter whether Bitcoin goes up or down. You might be thinking now that in order to do that you would need to lock up your entire channel balance on Kollider, which means you cannot spend your lightning Bitcoin. Fortunately this is not the case because Kollider allows you to borrow funds to limit your exposure on the plaform. For example, by default Hedgehog uses 10% of your balance to perform the hedging trade which leaves you with 90% of your lightning bitcoin free to spend.
+In a nutshell Ln Hedgehog looks at your channel balances and automatically short sells Bitcoin against the fiat currency of your choice (currently only USD). This means that the value **in fiat terms** of your channel balances will always be the same no matter whether Bitcoin goes up or down. You might be thinking now that in order to do that you would need to lock up your entire channel balance on Kollider, which means you cannot spend your lightning Bitcoin. Fortunately this is not the case because derivatives enable you trade in a much more capital efficient way through the concept of **leverage**. For example, by default Hedgehog uses 10% of your balance to perform the hedging trade which leaves you with 90% of your lightning bitcoin free to spend. Now as soon as you spend or receive payments, LN Hedgehog will automatically reblance your position so that your entire balance is locked.
 
 Furthermore, since hedging is done through a perpetual swap contract where interest rates are exchange between buyers and sellers every 8h, Hedgehog can accumulate interest on your locked balance. However, in times where there is significant downwards pressure this hedging strategy will become more expensive.
 
 #### Cool but why not Stablecoin?
 
-The most obvious question that arises is, why can't you buy a stable coin instead? Well you can but its slow and expensive. Imagine you have a lightning wallet and you want to buy tether? Well you would need to use a serivce like FixedFloat to do that. Currently the exchange would cost you about 34% in fees. 
+The most obvious question that arises is, why can't you buy a stable coin instead? Well you can but its slow and expensive. Imagine you have a lightning wallet and you want to buy tether? You would need to use a serivce like FixedFloat to do that. Currently the exchange would cost you about 34% in fees. Nevertheless while this is currently a compelling argument fees might decrease in the future. Regardless, the main assumption this stands on is that making any transaction on layer 1 will always be slower and more expensive. I assume that the only superior solution to this would be if the stable coin itself is transacted on the second layer.
 
 ## Demo
 This demo shows how one can lock in a USD price for 0.5% of their lightning channel balance in seconds.
