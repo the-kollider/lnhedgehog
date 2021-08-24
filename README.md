@@ -99,7 +99,7 @@ Setting lock proportion determins how much of your balance will be locked agains
 ./cli.py --lock_status
 ```
 
-The response will show you whether the balance is locked.
+The response will show you whether the balance is locked or not.
 
 ## Potential Application
 
