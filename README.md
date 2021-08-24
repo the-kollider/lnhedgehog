@@ -17,6 +17,10 @@ In a nutshell Ln Hedgehog looks at your channel balances and automatically short
 
 Furthermore, since hedging is done through a perpetual swap contract where interest rates are exchange between buyers and sellers every 8h, Hedgehog can accumulate interest on your locked balance. However, in times where there is significant downwards pressure this hedging strategy will become more expensive.
 
+#### Cool but why not Stablecoin?
+
+The most obvious question that arises is, why can't you buy a stable coin instead? Well you can but its slow and expensive. Imagine you have a lightning wallet and you want to buy tether? Well you would need to use a serivce like FixedFloat to do that. Currently the exchange would cost you about 34% in fees. 
+
 ## Demo
 This demo shows how one can lock in a USD price for 0.5% of their lightning channel balance in seconds.
 
@@ -70,11 +74,32 @@ order_type: What order type should the hedging programing use. Market | Limit
 
 ```
 
-## Run 
+## Run
+
+#### Run Server
+
+This will run the ln hedgehog server.
 
 ```shell
 python main.py
 ```
+
+#### Run Cli
+
+```shell
+./cli.py --help
+./cli.py --wallet_info
+./cli.py --node_info
+./cli.py --set_lock_proportion 0.5
+```
+
+Setting lock proportion determins how much of your balance will be locked against USD. Afer you run this command you can run
+
+```shell
+./cli.py --lock_status
+```
+
+The response will show you whether the balance is locked.
 
 ## Potential Application
 
