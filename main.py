@@ -1,5 +1,6 @@
 from os import get_inheritable
 from kollider_api_client.ws import KolliderWsClient
+from kollider_api_client.rest import KolliderRestClient
 from utils import *
 from console_logger import *
 from lnd_client import LndClient
@@ -11,9 +12,6 @@ from math import floor
 import uuid
 from pprint import pprint
 import threading
-
-import zlib
-import pickle
 
 import zmq
 
@@ -30,6 +28,7 @@ class HedgerState(object):
 	is_locking = False
 	lock_price = None
 	side = None
+	predicted_funding_payment = 0
 
 	def to_dict(self):
 		return {
@@ -40,7 +39,8 @@ class HedgerState(object):
 			"target_value": self.target_value,
 			"is_locking": self.is_locking,
 			"lock_price": self.lock_price,
-			"side": self.side
+			"side": self.side,
+			"predicted_funding_payment": self.predicted_funding_payment
 		}
 
 class Wallet(object):
@@ -72,7 +72,9 @@ class Wallet(object):
 
 class HedgerEngine(KolliderWsClient):
 	def __init__(self, lnd_client):
+		# Orders that are currently open on the Kollider platform.
 		self.open_orders = {}
+		# Positions that are currently open on the Kollider platform.
 		self.positions = {}
 		self.current_index_price = 0
 		self.current_mark_price = 0
@@ -82,14 +84,19 @@ class HedgerEngine(KolliderWsClient):
 		self.ws_is_open = False
 		self.contracts = {}
 
+		self.hedge_value = 0
+		self.hedge_proportion = 0
+		self.hedge_side = None
+		self.target_leverage = 100
+
+		# Last hedge state.
 		self.last_state = None
 
+		# Summary of the connected node.
 		self.node_info = None
 
+		# Order type that is used to make trades on Kollider.
 		self.order_type = "Market"
-
-		self.ln_channel_balance = 0
-		self.wallet_balance = 0
 
 		self.wallet = Wallet()
 
@@ -99,14 +106,15 @@ class HedgerEngine(KolliderWsClient):
 
 		self.received_tradable_symbols = False
 
-		self.hedge_value = 0
-		self.hedge_proportion = 0
-		self.hedge_side = None
-		self.target_leverage = 100
+		# Average hourly funding rates for each symbol. Used
+		# as an prediction of the next funding rate.
+		self.average_hourly_funding_rates = {}
 
 		self.is_locked = True
 
 	def to_dict(self):
+		average_funding = self.average_hourly_funding_rates.get(self.target_symbol)
+		average_funding = average_funding if average_funding else 0
 		return {
 			"node_info": self.node_info,
 			"wallet": self.wallet.to_dict(),
@@ -118,6 +126,7 @@ class HedgerEngine(KolliderWsClient):
 			"target_index_symbol": self.target_index_symbol,
 			"hedge_value": self.hedge_value,
 			"hedge_proportion": self.hedge_proportion,
+			"average_hourly_funding_rate": average_funding 
 		}
 
 	def set_params(self, **args):
@@ -226,20 +235,15 @@ class HedgerEngine(KolliderWsClient):
 
 		elif t == 'settlement_request':
 			print("Received settlement Request")
-			amount = int(data["amount"])
-			res = self.lnd_client.add_invoice(amount, "kollider settlement request")
-			withdrawal_request = {
-				"withdrawal_request": {
-					"Ln": {
-						"payment_request": res.payment_request,
-						"amount": amount,
-					}
-				}
-			}
-			self.withdrawal_request(withdrawal_request)
+			amount = data["amount"]
+			self.make_withdrawal(amount, "Kollider Trade Settlement")
 
 		elif t == 'balances':
-			total_balance = float(data["cash"])
+			total_balance = 0
+			cash_balance = float(data["cash"])
+			if cash_balance > 1:
+				self.make_withdrawal(cash_balance, "Kollider Payout")
+			total_balance += cash_balance
 			isolated_margin = data["isolated_margin"].get(self.target_symbol)
 			if isolated_margin is not None:
 				total_balance += float(isolated_margin)
@@ -247,11 +251,25 @@ class HedgerEngine(KolliderWsClient):
 			order_margin = data["order_margin"].get(self.target_symbol)
 			if order_margin is not None:
 				total_balance += float(order_margin)
-			
 			self.wallet.update_kollider_balance(total_balance)
+
 		elif t == 'error':
 			print("ERROR")
 			print(data)
+
+	def make_withdrawal(self, amount, message):
+		amt = int(amount)
+		res = self.lnd_client.add_invoice(amt, message)
+		withdrawal_request = {
+			"withdrawal_request": {
+				"Ln": {
+					"payment_request": res.payment_request,
+					"amount": amt,
+				}
+			}
+		}
+		self.withdrawal_request(withdrawal_request)
+
 
 	def cancel_all_orders_on_side(self, side):
 		orders = self.open_orders.get(self.target_symbol)
@@ -296,12 +314,18 @@ class HedgerEngine(KolliderWsClient):
 			return self.last_ticker.best_bid
 		else:
 			return self.last_ticker.best_ask
+	
+	def update_average_funding_rates(self):
+		rest_client = KolliderRestClient("http://api.staging.kollider.internal/v1/")
+		average_funding_rates = rest_client.get_average_funding_rates()
+		for funding_rate in average_funding_rates["data"]:
+			self.average_hourly_funding_rates[funding_rate["symbol"]] = funding_rate["mean_funding_rate"]
 
 	def build_target_state(self):
 		state = HedgerState()
 
-		hedge_value = self.wallet.total_ln_balance()
-		hedge_value = (hedge_value * self.hedge_proportion)
+		target_value = self.wallet.total_ln_balance()
+		hedge_value = (target_value * self.hedge_proportion)
 
 		# The number a contracts we need to cover the value.
 		target_number_of_contracts = self.calc_number_of_contracts_required(hedge_value)
@@ -335,6 +359,12 @@ class HedgerEngine(KolliderWsClient):
 		state.bid_open_order_quantity = open_bid_order_quantity
 		state.ask_open_order_quantity = open_ask_order_quantity
 		state.position_quantity = current_position_quantity
+
+		hourly_funding_rate = self.average_hourly_funding_rates.get(self.target_symbol)
+		if hourly_funding_rate is not None:
+			state.predicted_funding_payment = hedge_value * hourly_funding_rate
+		else:
+			state.predicted_funding_payment = 0
 
 		self.last_state = state
 
@@ -446,7 +476,6 @@ class HedgerEngine(KolliderWsClient):
 					self.hedge_proportion = value
 			sleep(0.5)
 			msg = self.to_dict()
-			print(msg)
 			socket.send_json(msg)
 			sleep(0.5)
 
@@ -482,6 +511,8 @@ class HedgerEngine(KolliderWsClient):
 
 
 			self.update_wallet_data()
+
+			self.update_average_funding_rates()
 
 			# Getting current state.
 			state = self.build_target_state()

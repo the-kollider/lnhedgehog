@@ -126,6 +126,39 @@ def print_status(ctx):
 		"$ " + str(dollar_value),
 		)
 
+	table.add_row(
+		"",
+		)
+
+	table.add_row(
+		"Yield", style="Bold Yellow"
+		)
+
+	table.add_row(
+		"Predicted Hourly Funding Rate",
+		str(ctx["average_hourly_funding_rate"] * 100) + " %",
+		)
+
+	table.add_row(
+		"Predicted Hourly Funding Payment",
+		str(int(last_state["predicted_funding_payment"] * 100) / 100) + " Sats",
+		)
+
+	table.add_row(
+		"Predicted Daily Funding Payment",
+		str(int(last_state["predicted_funding_payment"] * 24 * 100) / 100) + " Sats",
+		)
+
+	table.add_row(
+		"Predicted Yearly Funding Payment",
+		str(int(last_state["predicted_funding_payment"] * 24 * 365 * 100) / 100) + " Sats",
+		)
+
+	table.add_row(
+		"APY (Annual Percentage Yield)",
+		str(int(ctx["average_hourly_funding_rate"] * 24 * 365 * 100 *100) / 100 ) + " %",
+		)
+
 	console.print(table)
 
 
