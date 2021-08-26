@@ -9,7 +9,7 @@ Locking up Bitcoin in lightning channels is fine as long as the market goes up. 
 1. Earn interest on your locked Bitcoin
 2. Protect yourself from dowside risk (market going down)
 
-This is what Hedgehog tying to achieve.
+This is what LN Hedgehog trying to achieve.
 
 #### How does it work?
 

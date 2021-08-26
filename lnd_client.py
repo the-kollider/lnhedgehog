@@ -38,20 +38,5 @@ class LndClient(object):
 		invoice = ln.Invoice(value=amount, memo=memo)
 		return self.stub.AddInvoice(invoice, metadata=[('macaroon', self.macaroon)])
 
-	def start(self):
-		self.wst = threading.Thread(
-            target=self.update_state)
-		self.wst.daemon = True
-		self.wst.start()
-
-	def update_state(self):
-		pass
-
 if __name__ in "__main__":
-	node_url = "10.0.1.7:10009"
-	macaroon_path = "admin.macaroon"
-	tls_path = "tls.cert"
-	lnd_cli = LNDClient(node_url, macaroon_path, tls_path)
-	lnd_cli.start()
-	while True:
-		sleep(1)
+	pass
