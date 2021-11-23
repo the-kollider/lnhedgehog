@@ -46,6 +46,7 @@ pip install -e .
 In order to run Hedgehog you'll need:
 
 1. A Kollider API key
+	- To get an API key you have to register at https://pro.kollider.xyz. We support LnAuth so you can stay icognito. 
 2. The admin.macaroon of your node
 3. The tls.cert of your node
 
