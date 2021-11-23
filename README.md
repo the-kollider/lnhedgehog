@@ -57,6 +57,8 @@ mv sample.config.json config.json
 ```yml
 
 api_key: Your Kollider api key
+api_secret: Your Kollider api secret
+api_passphrase: Your kollider api passphrase
 ws_url: Websocket URL to the Kollider API
 lnd_url: URL to your lightning node 
 admin_macaroon_path: Path to your admin.macaroon file.
