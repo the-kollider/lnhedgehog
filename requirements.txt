@@ -9,7 +9,6 @@ greenlet==1.1.1
 grpcio==1.39.0
 grpcio-tools==1.39.0
 idna==3.2
--e git+git@github.com:kolliderhq/kollider-api-client.git@c8ff7b18a98afa1c142a41d6f1483497eddcb66a#egg=kollider_api_client
 protobuf==3.17.3
 Pygments==2.10.0
 pyzmq==22.2.1

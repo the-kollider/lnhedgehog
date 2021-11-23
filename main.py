@@ -140,6 +140,7 @@ class HedgerEngine(KolliderWsClient):
 
 	def on_open(self, event):
 		self.auth()
+		sleep(1)
 		self.sub_index_price([self.target_index_symbol])
 		self.sub_mark_price([self.target_symbol])
 		self.sub_ticker([self.target_symbol])
@@ -448,12 +449,15 @@ class HedgerEngine(KolliderWsClient):
 		pprint(self.wallet.to_dict())
 
 	def update_node_info(self):
-		node_info = self.lnd_client.get_info()
-		self.node_info = {
-			"alias": node_info.alias,
-			"identity_pubkey": node_info.identity_pubkey,
-			"num_active_channels": node_info.num_active_channels,
-		}
+		try:
+			node_info = self.lnd_client.get_info()
+			self.node_info = {
+				"alias": node_info.alias,
+				"identity_pubkey": node_info.identity_pubkey,
+				"num_active_channels": node_info.num_active_channels,
+			}
+		except Exception as e:
+			print(e)
 
 	def update_wallet_data(self):
 		channel_balances = self.lnd_client.get_channel_balances()
@@ -481,7 +485,6 @@ class HedgerEngine(KolliderWsClient):
 
 	def start(self, settings):
 		pprint(settings)
-
 		print("Connecting to Kollider websockets..")
 		while not self.ws_is_open:
 			pass
@@ -508,7 +511,6 @@ class HedgerEngine(KolliderWsClient):
 			# Don't do anything if we have no ticker price.
 			if self.last_ticker.last_side is None:
 				continue
-
 
 			self.update_wallet_data()
 
@@ -544,6 +546,6 @@ if __name__ in "__main__":
 
 	lock = Lock()
 
-	rn_engine.connect(kollider_url, kollider_api_key)
+	rn_engine.connect(settings["kollider"]["ws_url"], settings["kollider"]["api_key"], settings["kollider"]["api_secret"], settings["kollider"]["api_passphrase"])
 
 	rn_engine.start(settings)

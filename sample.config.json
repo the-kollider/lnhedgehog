@@ -1,7 +1,9 @@
 {
 	"kollider": {
 		"api_key": "",
-		"ws_url": "wss://api.kollider.internal/v1/ws/"
+		"api_secret": "",
+		"api_passphrase": "",
+		"ws_url": "wss://api.kollider.xyz/v1/ws/"
 	},
 	"lnd": {
 		"node_url": "localhost:10009",
